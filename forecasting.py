@@ -19,7 +19,7 @@ def forecast_weather():
 
     # Вычислите среднюю температуру и проанализируйте информацию об осадках за указанный период для всех городов
     calculation_task = DataCalculationTask(info=cities_weather)
-    calculation_task.run_concurrent(cities=CITIES.keys())
+    calculation_task.run_concurrent(cities=list(CITIES.keys()))
     weather_analytics = calculation_task.weather_analytics
 
     # Объедините полученные данные и сохраните результат в текстовом файле
