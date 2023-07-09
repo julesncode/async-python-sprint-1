@@ -23,12 +23,12 @@ def forecast_weather():
     weather_analytics = calculation_task.weather_analytics
 
     # Объедините полученные данные и сохраните результат в текстовом файле
-    agg_task = DataAggregationTask(data=weather_analytics)
-    agg_task.merge_results()
-    agg_task.save_results()
+    aggregated_data = DataAggregationTask(data=weather_analytics)
+    aggregated_data.merge_results()
+    aggregated_data.save_results()
 
     # Проанализируйте результат и сделайте вывод, какой из городов наиболее благоприятен для поездки.
-    data_analysis = DataAnalyzingTask(df=agg_task.df)
+    data_analysis = DataAnalyzingTask(df=aggregated_data.df)
     best_city = data_analysis.analyze_cities()
     best_city = ",".join(best_city)
     print(f"Best city(-es): {best_city}")
