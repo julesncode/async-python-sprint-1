@@ -6,6 +6,7 @@ from tasks import (
 )
 from utils import CITIES
 
+
 def forecast_weather():
     """
     Анализ погодных условий по городам
@@ -15,7 +16,6 @@ def forecast_weather():
     cities_weather_data = DataFetchingTask()
     cities_weather_data.get_cities_weather(cities=CITIES)
     cities_weather = cities_weather_data.weather_info
-    print(cities_weather['MOSCOW'])
 
     # Вычислите среднюю температуру и проанализируйте информацию об осадках за указанный период для всех городов
     calculation_task = DataCalculationTask(info=cities_weather)
@@ -32,6 +32,7 @@ def forecast_weather():
     best_city = data_analysis.analyze_cities()
     best_city = ",".join(best_city)
     print(f"Best city(-es): {best_city}")
+
 
 if __name__ == "__main__":
     forecast_weather()

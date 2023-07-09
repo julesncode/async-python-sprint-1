@@ -3,12 +3,10 @@ from queue import Empty, Queue
 from threading import Thread
 from typing import List, Dict, Union
 
-import numpy as np
 import pandas as pd
 
 from external.client import YandexWeatherAPI
 from log_progress import logger
-import xlsxwriter
 
 
 class DataFetchingTask:
@@ -137,7 +135,6 @@ class DataAggregationTask:
         for row in partly_data:
             # row[0] - city, row[1] - temperature data
             for el in row[1]:
-                print(f"element: {el}")
                 results.append(
                     {"city": row[0],
                      "date": el['date'],
@@ -164,14 +161,12 @@ class DataAggregationTask:
             results = list(executor.map(self.process_partly_data, batches))
 
         merged_results = pd.concat(results, ignore_index=True).fillna("")
-        print('-------')
         merged_results = merged_results.groupby('city') \
             .agg({'avg_temp': 'mean', 'n_hours_good_weather': 'sum'}) \
             .reset_index()
         merged_results['rank_temp'] = merged_results.avg_temp.rank(ascending=True).astype(int)
         merged_results['rank_good_hours'] = merged_results.n_hours_good_weather.rank(ascending=True).astype(int)
         merged_results['cumulative_rank'] = merged_results['rank_temp'] + merged_results['rank_good_hours']
-        print(merged_results)
 
         self.df = merged_results
 
