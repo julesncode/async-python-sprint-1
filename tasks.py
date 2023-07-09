@@ -1,7 +1,6 @@
 import concurrent.futures
 from queue import Empty, Queue
 from threading import Thread
-from typing import List, Dict, Union
 
 import pandas as pd
 
@@ -13,11 +12,11 @@ class DataFetchingTask:
     def __init__(self):
         self.queue = Queue()
         self.weather_info = {}
+        self.workers = 5
 
     @staticmethod
-    def get_weather(url) -> Dict:
-        weather_data = YandexWeatherAPI.get_forecasting(url)
-        return weather_data
+    def get_weather(url) -> dict:
+        return YandexWeatherAPI.get_forecasting(url)
 
     def worker(self):
         while True:
@@ -33,9 +32,7 @@ class DataFetchingTask:
                 self.queue.task_done()
 
     def get_cities_weather(self, cities):
-        workers = 5
-
-        for _ in range(workers):
+        for _ in range(self.workers):
             thread = Thread(target=self.worker)
             thread.daemon = True
             thread.start()
@@ -54,11 +51,11 @@ class DataFetchingTask:
 
 
 class DataCalculationTask:
-    def __init__(self, info: Dict):
+    def __init__(self, info: dict):
         self.info = info
         self.weather_analytics = {}
 
-    def get_city_temp(self, city: str, forecast_hours=tuple(range(9, 20))) -> Dict:
+    def get_city_temp(self, city: str, forecast_hours=tuple(range(9, 20))) -> dict:
         result = {}
         try:
             city_data = self.info[city]
@@ -73,9 +70,9 @@ class DataCalculationTask:
             return result
 
         for forecast_ in forecasts:
-            date = forecast_["date"]
             if len(forecast_["hours"]) < 24:
                 continue
+            date = forecast_["date"]
             result[date] = [
                 {"condition": hourly_data["condition"],
                  "temp": hourly_data["temp"]}
@@ -85,18 +82,15 @@ class DataCalculationTask:
         return result
 
     @staticmethod
-    def weather_conditions_calc(hours_data: List) -> int:
+    def weather_conditions_calc(hours_data: list) -> int:
         good_conditions = ("partly-cloud", "clear", "cloudy", "overcast")
-        count = sum(1 for hourly_data in hours_data if hourly_data["condition"] in good_conditions)
-        return count
+        return sum(1 for hourly_data in hours_data if hourly_data["condition"] in good_conditions)
 
     @staticmethod
-    def avg_temp(hours_data: List) -> Union[int, float]:
-        total_temp = sum(hourly_data["temp"] for hourly_data in hours_data)
-        avg_temp = total_temp / len(hours_data)
-        return avg_temp
+    def avg_temp(hours_data: list) -> list[int, float]:
+        return sum(hourly_data["temp"] for hourly_data in hours_data) / len(hours_data)
 
-    def calc_weather_stats(self, city: str) -> Dict:
+    def calc_weather_stats(self, city: str) -> dict:
         result = []
         try:
             city_data = self.get_city_temp(city)
@@ -115,7 +109,7 @@ class DataCalculationTask:
 
         return {city: result}
 
-    def run_concurrent(self, cities: List):
+    def run_concurrent(self, cities: list):
         with concurrent.futures.ProcessPoolExecutor() as executor:
             futures = [executor.submit(self.calc_weather_stats, city) for city in cities]
 
@@ -125,12 +119,12 @@ class DataCalculationTask:
 
 
 class DataAggregationTask:
-    def __init__(self, data: Dict):
+    def __init__(self, data: dict):
         self.data = data
         self.df = None
 
     @staticmethod
-    def process_partly_data(partly_data: List) -> pd.DataFrame:
+    def process_partly_data(partly_data: list) -> pd.DataFrame:
         results = []
         for row in partly_data:
             # row[0] - city, row[1] - temperature data
@@ -147,12 +141,12 @@ class DataAggregationTask:
         return df
 
     @staticmethod
-    def chunks(lst, n):
+    def chunks(lst: list, n: int) -> list:
         """Yield successive n-sized chunks from lst."""
         for i in range(0, len(lst), n):
             yield lst[i:i + n]
 
-    def merge_results(self, workers=5):
+    def merge_results(self, workers: int = 5) -> pd.DataFrame:
         items = list(self.data.items())
         batch_size = (len(items) + workers - 1) // workers  # Adjust chunk size to ensure all items are processed
         batches = self.chunks(items, batch_size)
@@ -169,6 +163,9 @@ class DataAggregationTask:
         merged_results['cumulative_rank'] = merged_results['rank_temp'] + merged_results['rank_good_hours']
 
         self.df = merged_results
+        return self.df
+        #print(self.df)
+        #self.df.to_csv('./examples/test2.csv', index=False, sep=';')
 
     def save_results(self):
         with pd.ExcelWriter('weather-stats.xlsx', mode='w') as writer:
@@ -176,10 +173,10 @@ class DataAggregationTask:
 
 
 class DataAnalyzingTask:
-    def __init__(self, df):
+    def __init__(self, df: pd.DataFrame):
         self.df = df
 
-    def analyze_cities(self):
+    def analyze_cities(self) -> list:
         best_rank = self.df["cumulative_rank"].max()
         best_cities = self.df.loc[self.df["cumulative_rank"] == best_rank]
         best_cities = list(best_cities.city.values)
