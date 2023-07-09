@@ -163,6 +163,9 @@ class DataAggregationTask:
         merged_results['cumulative_rank'] = merged_results['rank_temp'] + merged_results['rank_good_hours']
 
         self.df = merged_results
+        return self.df
+        #print(self.df)
+        #self.df.to_csv('./examples/test2.csv', index=False, sep=';')
 
     def save_results(self):
         with pd.ExcelWriter('weather-stats.xlsx', mode='w') as writer:

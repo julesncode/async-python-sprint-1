@@ -1,0 +1,3 @@
+city;avg_temp;n_hours_good_weather;rank_temp;rank_good_hours;cumulative_rank
+City1;9.35;15;1;1;2
+City2;10.95;15;2;1;3
